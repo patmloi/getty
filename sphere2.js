@@ -176,6 +176,8 @@ function initStars(count){
 function initFlowers(data) {
 
     var imgNames = Object.keys(data); 
+    console.log("NUMBER OF IMAGES")
+    console.log(imgNames.length)
     var objectsNum = 250; 
 
     // Create flower objects 
@@ -318,6 +320,12 @@ function removeMovedFlower() {
 
 }
 
+function explanationsVisible(){
+    document.querySelectorAll('.explanation').forEach(element => {
+        element.style.opacity = 1;
+    });
+}
+
 function flowersVisible() {
     flowerGroup.children.forEach(flower => {
         if (flower.material) {
@@ -331,6 +339,7 @@ function flowersVisible() {
 function resetFlowers() {
     removeMovedFlower(); 
     flowersVisible(); 
+    explanationsVisible(); 
     
 }
 
@@ -340,17 +349,9 @@ function closeModal() {
     modalShown = false;
 };
 
-function fadeOutFlowers(progress) {
-    flowerGroup.children.forEach(flower => {
-        if (flower.material && flower.name != 'movedFlower') {
-            console.log('FADE OUT FLOWER')
-            if (flower.name == 'movedFlower'){
-                console.log('MOVING FLOWER FADING')
-            }
-            flower.material.opacity = 1 - progress;
-            flower.material.transparent = true;
-            flower.material.needsUpdate = true;
-        }
+function hideExplanations() {
+    document.querySelectorAll('.explanation').forEach(element => {
+        element.style.opacity = 0;
     });
 }
 
@@ -424,7 +425,6 @@ function resetHighlightedFlower() {
 }
 
 
-
 function changeBackgroundFlower(intersectObject, intersectPoint){
     var movedFlower = intersectObject.clone();
     if (intersectObject.material) {
@@ -485,6 +485,7 @@ function onClick(event) {
         resetHighlightedFlower(); 
         changeBackgroundFlower(intersectObject, intersectPoint);
         hideFlowers(); 
+        hideExplanations(); 
         updateModal(intersectObject);
     }
 }; 

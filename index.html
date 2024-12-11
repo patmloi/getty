@@ -17,7 +17,7 @@
 	<head>
 		<meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
+        
 		<title>My first three.js app</title>
 		<style>
 
@@ -41,7 +41,6 @@
                 position: absolute;
                 justify-content: center;
                 text-align: center;
-                pointer-events: none;
                 font-size: 5vh;
             }
 
@@ -53,6 +52,25 @@
             @font-face {
                 font-family: 'Giarek';
                 src: url('fonts/ttf/Giarek-DemoVersion-Regular.ttf') format('truetype');
+            }
+
+            .public-sans-explanation {
+                font-family: "Public Sans", serif;
+                font-optical-sizing: auto;
+                font-weight: 500;
+                font-style: normal;
+            }
+
+            .explanation {
+                padding-left: 25%; 
+                padding-right: 25%;
+                font-size: 1.5rem; 
+                color: white; 
+                text-shadow: 1px 1px 10px #999999, 1px 1px 20px #999999;
+            }
+
+            .explanation-link {
+                color: white; 
             }
 
             #scrollProgress {
@@ -161,7 +179,7 @@
                 background-image: linear-gradient(currentColor, currentColor);
                 background-position: 0% 100%;
                 background-repeat: no-repeat;
-                background-size: 0% 4px;
+                background-size: 0% 2px;
                 transition: background-size cubic-bezier(0,.5,0,1) 0.3s;
             }
 
@@ -169,7 +187,7 @@
             .modalUrl:focus {
                 color: #e7e7e8; 
                 text-decoration: none;
-                background-size: 100% 4px;
+                background-size: 100% 2px;
             }
 
             #modalUrlContainer {
@@ -239,14 +257,14 @@
             <section>
             </section>
 
-            <section>
-                <h2>Changing Objects Position</h2>
-                <p>The cubes position is now changing</p>
+            <section class="explanation public-sans-explanation">
+                <p>Step into the enchanting universe of Getty's Flowers, an immersive interactive website where art blossoms at your fingertips.</p>
+                <br>
+                <p>As you navigate this digital cosmos, you'll discover a floating garden, where each flower representing a unique piece of art.</p>
             </section>
 
-            <section>
-                <h2>Changing Objects Rotation</h2>
-                <p>The cubes rotation is now changing</p>
+            <section class="explanation public-sans-explanation">
+                <p>This collection features 50 curated art pieces from Getty's Museum (<a class="modalUrl" href="https://www.getty.edu/art/collection/search">Open Contents Collection</a>), each piece showcasing the diversity and richness of artistic expression.</p>
                 <!-- <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
