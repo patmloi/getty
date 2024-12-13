@@ -642,7 +642,15 @@ function animate() {
     time += .01;
 }
 
-function init() {
+function initMobile() {
+    initScene();
+    initLighting();
+    initStars(50000);
+    initPostProcessing();
+    render();
+}
+
+function initDesktop() {
     initScene();
     initLighting();
     initTitle();
@@ -664,5 +672,15 @@ function init() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Start the application
-init();
+function init() {
+    const screenThreshold = 768; // Set your screen size threshold
+    if (window.innerWidth >= screenThreshold) {
+        initDesktop();
+    } else {
+        initMobile();
+        // console.log('Screen size is too small. Initialization skipped.');
+    }
+}
+
+init(); 
+
