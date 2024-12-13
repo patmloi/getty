@@ -661,7 +661,7 @@ function initMobile() {
 
 function initDesktop() {
     initScene();
-    // initLighting();
+    initLighting();
     initTitle();
      
     initStars(50000);
