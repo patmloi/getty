@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Mesh, MeshBasicMaterial, TextureLoader, PlaneGeometry } from 'three'
+import { Mesh, MeshBasicMaterial, TextureLoader, PlaneGeometry, MeshPhongMaterial} from 'three'
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -103,7 +103,8 @@ function createText(text, font, zPos, group) {
     textGeo.computeBoundingBox();
     textGeo.computeVertexNormals();
 
-    var textMaterial = new THREE.MeshPhongMaterial( { 
+    // new THREE.MeshPhongMaterial( { 
+    var textMaterial = MeshPhongMaterial( { 
         color: 0xffffff,
         specular: 0xffffff,
         flatShading: false,
