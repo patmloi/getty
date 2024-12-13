@@ -9,7 +9,7 @@
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/project-name.git
+   git clone https://github.com/yourusername/getty.git
    ```
 
 2. Navigate into the project directory: 
