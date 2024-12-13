@@ -176,8 +176,6 @@ function initStars(count){
 function initFlowers(data) {
 
     var imgNames = Object.keys(data); 
-    console.log("NUMBER OF IMAGES")
-    console.log(imgNames.length)
     var objectsNum = 250; 
 
     // Create flower objects 
