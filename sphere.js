@@ -103,20 +103,15 @@ function createText(text, font, zPos, group) {
     textGeo.computeBoundingBox();
     textGeo.computeVertexNormals();
 
-    // var textMaterial = new THREE.MeshPhongMaterial( { 
-    //     color: 0xffffff,
-    //     specular: 0xffffff,
-    //     flatShading: false,
-    //     reflectivity: 10,
-    //     shininess: 15,
-    //     emissive: 0xffffff,
-    //     emissiveIntensity: 0.40
-    //  } );
-
-    const textMaterial = new THREE.MeshBasicMaterial({
+    var textMaterial = new THREE.MeshPhongMaterial( { 
         color: 0xffffff,
-        wireframe: false
-      });
+        specular: 0xffffff,
+        flatShading: false,
+        reflectivity: 10,
+        shininess: 15,
+        emissive: 0xffffff,
+        emissiveIntensity: 0.40
+     } );
 
     const centerOffset = - 0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
     const textHover = 0.5 * (textGeo.boundingBox.max.y - textGeo.boundingBox.min.y);
@@ -666,7 +661,7 @@ function initMobile() {
 
 function initDesktop() {
     initScene();
-    initLighting();
+    // initLighting();
     initTitle();
      
     initStars(50000);
