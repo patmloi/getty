@@ -104,7 +104,7 @@ function createText(text, font, zPos, group) {
     textGeo.computeVertexNormals();
 
     // new THREE.MeshPhongMaterial( { 
-    var textMaterial = MeshPhongMaterial( { 
+    var textMaterial = new MeshPhongMaterial( { 
         color: 0xffffff,
         specular: 0xffffff,
         flatShading: false,
