@@ -4,96 +4,94 @@ import { Mesh, MeshBasicMaterial, TextureLoader, PlaneGeometry } from 'three'
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { Vector2, Vector3 } from 'three';
 
 import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
 import { Font } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
+// Utilities
+var noise = id => 1. * Math.sin(id);
 
-let flowerData  = {};
+// Global variables
+let scene, camera, renderer, composer;
+let flowerGroup = new THREE.Group(), titleGroup = new THREE.Group(), starsMesh
+let raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2(), modalShown = false;
+let highlightedFlower = false, originalMaterial = false; 
+const modalElement = document.querySelector('#modal');
+let flowerData = {};
+let scrollPercent = 0;
 
-fetch('data.json')
-    .then((response) => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
-        return response.json(); // Parse the JSON data from the response
-    })
-    .then((data) => {
-        flowerData = data;
-        generateFlowers(data);
-    })
-    .catch((error) => {
-        console.error('There was a problem with the fetch operation:', error);
-    });
+let flockParams = {
+    separationFactor: 1.5,    // Stronger separation to prevent clustering
+    alignmentFactor: 0.3,      // Encourage group alignment
+    cohesionFactor: 0.3,       // Tendency to move as a group
+    maxSpeed: 0.01,             // Consistent group speed
+    perceptionRadius: 1.0,     // Radius of interaction between stars
+    targetSpeed: 0.005,         // Desired overall group velocity
+    globalDirection: new THREE.Vector3(1, 0.2, 0.1) // Consistent group movement direction
+};
+
+// Rotation variables 
+let windowHalfX = window.innerWidth / 2, windowHalfY = window.innerHeight / 2;
+let mouseX = 0, mouseY = 0;
+let mouseXOnMouseDown = 0, mouseYOnMouseDown = 0;
+let targetRotationX = 0.2, targetRotationY = 0.2;
+let targetRotationOnMouseDownX = 0, targetRotationOnMouseDownY = 0;
 
 
-const scene = new THREE.Scene();
-scene.fog = new THREE.Fog( 0x000000, 0, 75 );
+// Initialize the scene
+function initScene() {
+    // Scene
+    scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x000000, 0, 75);
 
+    // Camera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 100;
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    // Renderer
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+}
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+// Setup lighting
+function initLighting() {
+    // Directional light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(0, 0, 10).normalize();
+    scene.add(directionalLight);
 
-// Text
-var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(0, 0, 10).normalize();
-scene.add(directionalLight);
+    // Ambient light
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+}
 
-var pointLight = new THREE.PointLight(0xffffff, 3);
-pointLight.position.set()
-
-var ambientLight = new THREE.AmbientLight(0x404040); // soft white light
-scene.add(ambientLight);
-
-var titleGroup = new THREE.Group();
-var titleText = 'flowers and art';
-var titleZPos = 95; 
-
-const depth = 0.05,
-    size = 1,
-    hover = 1,
-    curveSegments = 15,
-    bevelThickness = 0.05,
-    bevelSize = 0.01;
-
-let font = null;
-const mirror = false;
-
-const ttfLoader = new TTFLoader();
-
-ttfLoader.load('fonts/ttf/Giarek-DemoVersion-Regular.ttf', function ( json ) {
-    font = new Font(json);
-    console.log("CHECK VAR")
-    console.log(titleGroup)
-    createText(titleText, titleZPos, titleGroup); 
-    scene.add(titleGroup)
-} );
-
-function createText(text, zPos, group) {
+function createText(text, font, zPos, group) {
+    const textDepth = 0.05,
+        textSize = 1,
+        textCurveSegments = 15,
+        textBevelThickness = 0.05,
+        textBevelSize = 0.01;
 
     var textGeo = new TextGeometry( text, {
 
         font: font,
 
-        size: size,
-        depth: depth,
-        curveSegments: curveSegments,
+        size: textSize,
+        depth: textDepth,
+        curveSegments: textCurveSegments,
 
-        bevelThickness: bevelThickness,
-        bevelSize: bevelSize,
+        bevelThickness: textBevelThickness,
+        bevelSize: textBevelSize,
         bevelEnabled: true
 
     } );
 
     textGeo.computeBoundingBox();
     textGeo.computeVertexNormals();
+
     var textMaterial = new THREE.MeshPhongMaterial( { 
         color: 0xffffff,
         specular: 0xffffff,
@@ -104,50 +102,81 @@ function createText(text, zPos, group) {
         emissiveIntensity: 0.40
      } );
 
+    const centerOffset = - 0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
+    const textHover = 0.5 * (textGeo.boundingBox.max.y - textGeo.boundingBox.min.y);
 
-    const centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
-    const hover = 0.5 * ( textGeo.boundingBox.max.y - textGeo.boundingBox.min.y );
+    var textMesh = new THREE.Mesh(textGeo, textMaterial);
 
-    var textMesh1 = new THREE.Mesh( textGeo, textMaterial );
+    textMesh.position.x = centerOffset;
+    textMesh.position.y = textHover;
+    textMesh.position.z = 95;
 
-    textMesh1.position.x = centerOffset;
-    textMesh1.position.y = hover;
-    textMesh1.position.z = 95;
-
-    console.log("TEXT MESH")
-    console.log(textMesh1.position.x, textMesh1.position.y, textMesh1.position.z)
-    group.add( textMesh1 );
+    group.add(textMesh);
 
 }
 
-scene.add(titleGroup)
+function initTitle() {
+    const ttfLoader = new TTFLoader();
+    ttfLoader.load('fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
+        var titleFont = new Font(json);
+        createText("Getty's Flowers", titleFont, 95, titleGroup);
+        scene.add(titleGroup);
+    });
+}
 
+function initStar() {
+    // Star
+    const minRadius = 0.01;
+    const maxRadius = 0.05;
 
-// Box
-const boxSize = 5;
-const geometry = new THREE.BoxGeometry(boxSize, boxSize, boxSize);
-const materials = [
-    new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide, visible: false}), // Red
-    new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide, visible: false}), // Green
-    new THREE.MeshBasicMaterial({ color: 0x0000ff, side: THREE.DoubleSide, visible: false}), // Blue
-    new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide, visible: false}), // Yellow
-    new THREE.MeshBasicMaterial({ color: 0xff00ff, side: THREE.DoubleSide, visible: false}), // Magenta
-    new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, visible: false})  // Cyan
-  ];
-const cube = new THREE.Mesh(geometry, materials);
-scene.add(cube);
+    // Randomise star
+    const dummy = new THREE.Object3D(); 
 
-camera.position.z = 100;
+    // Randomise position
+    dummy.position.set(
+        Math.random() * 200 - 100,
+        Math.random() * 200 - 100,
+        Math.random() * 200 - 100
+    );
 
-// Objects 
-var objectsNum = 250; 
-var objects = []; 
-const flowerGroup = new THREE.Group();
+    // Randomise size 
+    const randomRadius = minRadius + (maxRadius - minRadius) * Math.random();
+    dummy.scale.set(randomRadius, randomRadius, randomRadius);
 
+    // Apply transformation 
+    dummy.updateMatrix();
+    return dummy; 
+}
 
-function generateFlowers(data) {
+function initStars(count){ 
+    // Sphere
+    const baseRadius = 1;
+    const sphereGeometry = new THREE.SphereGeometry(baseRadius, 5, 5);
+    const sphereMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xffffff, 
+        emissiveIntensity: 2.0 
+    });
+
+    // Instanced Mesh
+    starsMesh = new THREE.InstancedMesh(sphereGeometry, sphereMaterial, count);
+
+    // Add stars to mesh
+    for (let i = 0; i < count; i++) { 
+        let star = initStar();
+        starsMesh.setMatrixAt(i, star.matrix);
+    }
+
+    // Update mesh
+    starsMesh.instanceMatrix.needsUpdate = true;
+    scene.add(starsMesh);
+    return starsMesh
+}
+
+function initFlowers(data) {
 
     var imgNames = Object.keys(data); 
+    var objectsNum = 250; 
 
     // Create flower objects 
     for (let i = 0, l = objectsNum; i < objectsNum; i++) {
@@ -161,6 +190,9 @@ function generateFlowers(data) {
         loader.load(imgPath, function (texture) {
             // Item components
             const material = new THREE.MeshBasicMaterial()
+            // const material = new THREE.MeshStandardMaterial();
+            // material.flatShading = false;
+            // material.normalScale = new THREE.Vector2(0,0);
             material.map = texture
             material.transparent = true
             material.needsUpdate = true
@@ -169,48 +201,56 @@ function generateFlowers(data) {
 
             // Item 
             var mesh = new Mesh(geo, material);
-            mesh.scale.x = texture.image.width / 1000;
-            mesh.scale.y = texture.image.height / 1000;
+            var scale_random = 1.125 + .125 * noise(39278 * i);
+            mesh.scale.x = texture.image.width / 1000 * scale_random;
+            mesh.scale.y = texture.image.height / 1000 * scale_random;
             mesh.material.side = THREE.DoubleSide;
             mesh.name = imgName;
-
-            console.log("MESH NAME")
-            console.log(mesh.name)
 
             // Position
             const phi = Math.acos( - 1 + ( 2 * i ) / l );
             const theta = Math.sqrt( l * Math.PI ) * phi;
-            mesh.position.setFromSphericalCoords(10, phi, theta );
+            mesh.position.setFromSphericalCoords(10, phi, theta);
 
             // Direction
             const vector = new THREE.Vector3();
             vector.copy(mesh.position).multiplyScalar(3);
             mesh.lookAt(vector);
 
+            mesh.rotateX(.3 * noise(10385 * i));
+            mesh.rotateY(.3 * noise(18394 * i));
+            mesh.rotateZ(.3 * noise(19372 * i));
+
             flowerGroup.add(mesh);
+            scene.add(flowerGroup);
         });
 
     };
 };
-scene.add(flowerGroup);
 
-console.log("FLOWER GROUP POSITION")
-console.log(flowerGroup.position.x, flowerGroup.position.y, flowerGroup.position.z)
+function initBloomPass() {
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.4, 0.95);
+    bloomPass.renderTargetsHorizontal.forEach(element => {
+        element.texture.type = THREE.FloatType;
+    });
+    bloomPass.renderTargetsVertical.forEach(element => {
+        element.texture.type = THREE.FloatType;
+    });
+    return bloomPass; 
+};
 
-// Flower are clickable 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+function initPostProcessing() {
+    composer = new EffectComposer(renderer); 
+    var bloomPass = initBloomPass();
 
-// Modal 
-var showModal = false; // Change this value to false to hide the modal
-const myModal = new bootstrap.Modal(document.getElementById('myModal'));
+    composer.addPass(new RenderPass(scene, camera)); // RenderPass 
+    composer.addPass(bloomPass); // BloomPass
 
+};
 
-// Add an event listener for mouse clicks
-window.addEventListener('click', onClick, false);
-
-
-function updatePopupImg(id, intersectName){
+// Event Handling
+// Mouse click event handling 
+function updateModalImg(id, intersectName){
     var intersectJpg = intersectName.slice(0, -3) + 'jpg'; 
     var popupImgPath = "artwork/" + intersectJpg
     var popupImgId = '#' + id; 
@@ -218,165 +258,252 @@ function updatePopupImg(id, intersectName){
     popupImg.src = popupImgPath; 
 }
 
-function updatePopupText(id, intersectInfo, key){
+function updateModalText(id, intersectInfo, key){
     var popupItemId = '#' + id; 
     var popupItem = document.querySelector(popupItemId);
     popupItem.textContent = intersectInfo[key]; 
 }
 
-function updatePopupUrl (id, intersectInfo, key){
+function updateModalArtist(id, intersectInfo) {
+    var popupItemId = '#' + id; 
+    var popupItem = document.querySelector(popupItemId);
+
+    if (intersectInfo['artistUrl'][0] == "") {
+        popupItem.textContent = intersectInfo['artist']; 
+    }
+    else {
+        var artistsUrls = intersectInfo['artist'].map((artist, index) => ({
+            Artist: artist, 
+            Url: intersectInfo['artistUrl'][index]
+        }));
+
+        var artistsUrlsList = artistsUrls.map(au => 
+            `<a class='modalUrl' href="${au.Url}" target="_blank">
+                ${au.Artist}
+            </a>`
+        );
+
+        // Join the links with comma separator
+        popupItem.innerHTML = artistsUrlsList.join(', &nbsp;');
+    }
+}
+
+function updateModalLink (id, intersectInfo, key){
     var popupItemId = '#' + id; 
     var popupItem = document.querySelector(popupItemId);
     popupItem.href = intersectInfo[key]; 
 }
 
-function displayPopup(intersectObject){
-    intersectObject.material.color.set(0x0000ff);
+function updateModal(intersectObject){
+    // intersectObject.material.color.set(0x0000ff);
     var intersectName = intersectObject.name; 
     var intersectInfo = flowerData[intersectName];
 
-    // Show popup
-    const popupElement = document.querySelector('#popup');
-    popupElement.style.display = 'block';
+    // Show modal
+    modalElement.style.display = 'flex';
+    modalShown = true;
 
     // Change text
-    updatePopupImg('popupImg', intersectName)
-    updatePopupText('popupTitle', intersectInfo, 'title')
-    updatePopupText('popupArtist', intersectInfo, 'artist')
-    updatePopupText('popupDesc', intersectInfo, 'description')
-    updatePopupUrl('popupUrl', intersectInfo, 'url')
+    updateModalImg('modalImg', intersectName)
+    updateModalText('modalTitle', intersectInfo, 'title')
+    updateModalArtist('modalArtist', intersectInfo)
+    updateModalText('modalDate', intersectInfo, 'date')
+    updateModalText('modalDesc', intersectInfo, 'description')
+    updateModalLink('modalLink', intersectInfo, 'url')
+};
+
+function removeMovedFlower() {
+    var movedFlower = scene.getObjectByName('movedFlower');
+    scene.remove(movedFlower);
+
 }
 
-function closePopup() {
-    const popupElement = document.querySelector('#popup');
-    if (popupElement) {
-        popupElement.style.display = 'none';
-        console.log("CLOSED");
-    } else {
-        console.log("Popup element not found");
+function explanationsVisible(){
+    document.querySelectorAll('.explanation').forEach(element => {
+        element.style.opacity = 1;
+    });
+}
+
+function flowersVisible() {
+    flowerGroup.children.forEach(flower => {
+        if (flower.material) {
+            flower.material.opacity = 1;
+            flower.material.transparent = true; // Keep this true to allow future opacity changes
+            flower.material.needsUpdate = true;
+        }
+    });
+}
+
+function resetFlowers() {
+    removeMovedFlower(); 
+    flowersVisible(); 
+    explanationsVisible(); 
+    
+}
+
+function closeModal() {
+    resetFlowers(); 
+    modalElement.style.display = 'none';
+    modalShown = false;
+};
+
+function hideExplanations() {
+    document.querySelectorAll('.explanation').forEach(element => {
+        element.style.opacity = 0;
+    });
+}
+
+function hideFlowers () {
+    flowerGroup.children.forEach(flower => {
+        if (flower.material && flower.name != 'movedFlower') {
+            flower.material.opacity = 0;
+            flower.material.transparent = true;
+            flower.material.needsUpdate = true;
+        }
+    });
+}
+
+function getFlowerPosition(movedFlower) {
+    if (!movedFlower) {
+        console.error("movedFlower is undefined");
+        return;
+    }
+
+    // Calculate the desired height of the flower in viewport space (e.g., 1.1 times viewport height)
+    const desiredViewportHeight = 1.1;
+
+    // Calculate the distance from the camera where the flower should stop
+    const fov = camera.fov * (Math.PI / 180); // convert to radians
+    const flowerHeight = movedFlower.scale.y;
+    const distance = (flowerHeight / 2) / Math.tan(fov / 2) / desiredViewportHeight;
+
+    // Calculate horizontal position
+    const aspectRatio = window.innerWidth / window.innerHeight;
+    const flowerWidth = movedFlower.scale.x;
+    const visibleWidthRatio = 0.9; // 90% of the flower width should be visible
+    const horizontalFov = fov * aspectRatio;
+    const horizontalOffset = (distance * Math.tan(horizontalFov / 2)) * (0.5 + (1 - visibleWidthRatio) / 2);
+
+    // Calculate target position
+    const targetPosition = camera.position.clone();
+    const cameraDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const cameraRight = new THREE.Vector3(0.75, 0, 0).applyQuaternion(camera.quaternion);
+    targetPosition.addScaledVector(cameraDirection, distance);
+    targetPosition.addScaledVector(cameraRight, horizontalOffset);
+    return targetPosition;
+}
+
+function highlightFlower(intersectObject) {
+    if (highlightedFlower != intersectObject) {
+        resetHighlightedFlower(); 
+
+    }
+    if (highlightedFlower == false && originalMaterial == false) {
+        const highlightMaterial = new THREE.MeshStandardMaterial();
+        highlightMaterial.map = intersectObject.material.map;
+        highlightMaterial.transparent = true; 
+        highlightMaterial.needsUpdate = true; 
+        highlightMaterial.emissive = new THREE.Color(0xffffff);
+        highlightMaterial.missiveIntensity = 1000;
+        highlightMaterial.side = THREE.DoubleSide; 
+    
+        highlightedFlower = intersectObject; 
+        originalMaterial = intersectObject.material;
+        highlightedFlower.material = highlightMaterial;
+    }
+
+}
+
+function resetHighlightedFlower() {
+    if (highlightedFlower) {
+        highlightedFlower.material = originalMaterial;
+        highlightedFlower = false;
+        originalMaterial = false;
     }
 }
 
 
-function onClick(event) {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+function changeBackgroundFlower(intersectObject, intersectPoint){
+    var movedFlower = intersectObject.clone();
+    if (intersectObject.material) {
+        movedFlower.material = intersectObject.material.clone();
+        movedFlower.material.opacity = 1;
+        movedFlower.material.transparent = true;
+        movedFlower.material.needsUpdate = true;
+    }
 
+    movedFlower.name = "movedFlower";
+
+    // Position
+    var targetPosition = getFlowerPosition(movedFlower); 
+    movedFlower.position.copy(targetPosition);
+
+    // Transformation
+    const targetQuaternion = camera.quaternion.clone();
+    movedFlower.quaternion.copy(targetQuaternion); 
+
+    scene.add(movedFlower);
+}
+
+function getFlowerIntersectMouse() {
     raycaster.ray.origin.copy(camera.position);
     raycaster.ray.direction.set(mouse.x, mouse.y, 1).unproject(camera).normalize();
+    return raycaster.intersectObjects(flowerGroup.children, true);
+}
 
-    const intersects = raycaster.intersectObjects(flowerGroup.children, true);
-    console.log('Intersections:', intersects);
+function updateMouseGlobal(event) {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+}
 
+function onHover() {
+    if (modalShown) return;
+
+    let intersects = getFlowerIntersectMouse();
     if (intersects.length > 0) {
-        // Get intersected element
-        const intersectObject = intersects[0].object;
-        console.log("INTERSECT OBJECT")
-        console.log(intersectObject)
-        displayPopup(intersectObject)
+        document.body.style.cursor = 'pointer';
+        var intersectObject = intersects[0].object;
+        highlightFlower(intersectObject);
 
-        
-        if (showModal) {
-            myModal.show(); // Show the modal
-
-            
-        } else {
-            myModal.hide(); // Hide the modal
-
-        }
     } else {
-        console.log('Nothing clicked');
+        document.body.style.cursor = 'auto';
+        resetHighlightedFlower(); 
+
     }
 }
 
-// Stars
-// Sphere
-const baseRadius = 1;
-const minRadius = 0.01;
-const maxRadius = 0.05;
-const sphereGeometry = new THREE.SphereGeometry(baseRadius, 32, 32);
-const sphereMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    emissive: 0xffffff, 
-    emissiveIntensity: 2.0 
-});
+function onClick(event) {
+    if (modalShown) return;
 
-// Instances
-const count = 25000;
-const instancedMesh = new THREE.InstancedMesh(sphereGeometry, sphereMaterial, count);
+    let intersects = getFlowerIntersectMouse();
+    if (intersects.length > 0) {
+        // Get intersected element
+        var intersectPoint = intersects[0].point;
+        var intersectObject = intersects[0].object;
+        resetHighlightedFlower(); 
+        changeBackgroundFlower(intersectObject, intersectPoint);
+        hideFlowers(); 
+        hideExplanations(); 
+        updateModal(intersectObject);
+    }
+}; 
 
-// Customising each star: 
-const dummy = new THREE.Object3D(); 
-
-for (let i = 0; i < count; i++) {
-    // Positions
-    dummy.position.set(
-        Math.random() * 200 - 100,
-        Math.random() * 200 - 100,
-        Math.random() * 200 - 100
-    );
-
-    // Size
-    const randomRadius = minRadius + (maxRadius - minRadius) * Math.random();
-    dummy.scale.set(randomRadius, randomRadius, randomRadius);
-
-    // Apply transformations
-    dummy.updateMatrix();
-    instancedMesh.setMatrixAt(i, dummy.matrix);
-}
-
-// Update mesh
-instancedMesh.instanceMatrix.needsUpdate = true;
-scene.add(instancedMesh);
-
-// Set up post-processing
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-
-// Add UnrealBloomPass with increased strength for visibility
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.4, 0.95);
-bloomPass.renderTargetsHorizontal.forEach(element => {
-    element.texture.type = THREE.FloatType;
-});
-bloomPass.renderTargetsVertical.forEach(element => {
-    element.texture.type = THREE.FloatType;
-});
-composer.addPass(bloomPass);
-
-// Variables for rotation
-let targetRotationX = 0.2;
-let targetRotationOnMouseDownX = 0;
-
-let targetRotationY = 0.2;
-let targetRotationOnMouseDownY = 0;
-
-let mouseX = 0;
-let mouseXOnMouseDown = 0;
-
-let mouseY = 0;
-let mouseYOnMouseDown = 0;
-
-let windowHalfX = window.innerWidth / 2;
-let windowHalfY = window.innerHeight / 2;
-
-let slowingFactor = 0.1;
-
-// Event Listeners
-document.addEventListener('mousedown', onDocumentMouseDown, false);
-
+// Mouse actions event handling
 function onDocumentMouseDown(event) {
-    event.preventDefault();
+    if (!modalShown) {
+        event.preventDefault();
 
-    document.addEventListener('mousemove', onDocumentMouseMove, false);
-    document.addEventListener('mouseup', onDocumentMouseUp, false);
-    document.addEventListener('mouseout', onDocumentMouseOut, false);
-
-    mouseXOnMouseDown = event.clientX - windowHalfX;
-    targetRotationOnMouseDownX = targetRotationX;
-
-    mouseYOnMouseDown = event.clientY - windowHalfY;
-    targetRotationOnMouseDownY = targetRotationY;
-}
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
+        document.addEventListener('mouseup', onDocumentMouseUp, false);
+        document.addEventListener('mouseout', onDocumentMouseOut, false);
+    
+        mouseXOnMouseDown = event.clientX - windowHalfX;
+        targetRotationOnMouseDownX = targetRotationX;
+    
+        mouseYOnMouseDown = event.clientY - windowHalfY;
+        targetRotationOnMouseDownY = targetRotationY;
+    }
+};
 
 function onDocumentMouseMove(event) {
     mouseX = event.clientX - windowHalfX;
@@ -384,113 +511,174 @@ function onDocumentMouseMove(event) {
 
     mouseY = event.clientY - windowHalfY;
     targetRotationY = (mouseY - mouseYOnMouseDown) * 0.0001;
-}
+};
 
 function onDocumentMouseUp(event) {
     document.removeEventListener('mousemove', onDocumentMouseMove, false);
     document.removeEventListener('mouseup', onDocumentMouseUp, false);
     document.removeEventListener('mouseout', onDocumentMouseOut, false);
-}
+};
 
 function onDocumentMouseOut(event) {
     document.removeEventListener('mousemove', onDocumentMouseMove, false);
     document.removeEventListener('mouseup', onDocumentMouseUp, false);
     document.removeEventListener('mouseout', onDocumentMouseOut, false);
-}
-
-// Rotation Functions
-function rotateAroundWorldAxis(object, axis, radians) {
-    const rotationMatrix = new THREE.Matrix4();
-    rotationMatrix.makeRotationAxis(axis.normalize(), radians);
-    rotationMatrix.multiply(object.matrix); // Pre-multiply
-    object.matrix = rotationMatrix;
-    object.rotation.setFromRotationMatrix(object.matrix);
-}
+};
 
 // Window resize
-window.addEventListener('resize', onWindowResize, false)
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
     renderer.setSize(window.innerWidth, window.innerHeight)
-    render()
+    render(); 
 }
+
+// Update scroll progress
+function updateScrollPercent() {
+    scrollPercent = ((document.documentElement.scrollTop || document.body.scrollTop) /
+        ((document.documentElement.scrollHeight || document.body.scrollHeight) -
+            document.documentElement.clientHeight)) * 100;
+};
 
 function lerp(x, y, a) {
     return (1 - a) * x + a * y
-}
+};
 
-// Used to fit the lerps to start and end at specific scrolling percentages
 function scalePercent(start, end) {
     return (scrollPercent - start) / (end - start)
-}
+};
 
-const animationScripts = [];
+function scrollAnimation() {
+    const scrollAnimationList = [
+        {
+            start: 0,
+            end: 100,
+            func: function() {
+                camera.position.set(0, 1, 0);
+                const newZ = lerp(100, 0, scalePercent(0, 100));
+                camera.position.set(0, 1, newZ);
+            }
+        }];
 
-// Animations
-animationScripts.push({
-    start: 0,
-    end: 100,
-    func: function() {
-        camera.position.set(0, 1, 0);
-        const newZ = lerp(100, 0, scalePercent(0, 100));
-        camera.position.set(0, 1, newZ);
-    },
-});
-function playScrollAnimations() {
-    animationScripts.forEach((a) => {
+    scrollAnimationList.forEach((a) => {
         if (scrollPercent >= a.start && scrollPercent < a.end) {
             a.func()
         }
     })
 }
 
-let scrollPercent = 0
+function initEventListeners() {
+    // Scroll
+    document.addEventListener('mousedown', onDocumentMouseDown, false);
+    // Clicks 
+    window.addEventListener('click', onClick, false);
+    document.getElementById('closeBtn').addEventListener('click', closeModal);
+    // Mouse moves
+    document.addEventListener('mousemove', updateMouseGlobal, false);
 
-document.body.onscroll = () => {
-    //calculate the current scroll progress as a percentage
-    scrollPercent =
-        ((document.documentElement.scrollTop || document.body.scrollTop) /
-            ((document.documentElement.scrollHeight ||
-                document.body.scrollHeight) -
-                document.documentElement.clientHeight)) * 100
-    ;(document.getElementById('scrollProgress')).innerText =
-        'Scroll Progress : ' + scrollPercent.toFixed(2)
-}
+    window.addEventListener('resize', onWindowResize, false);
+    document.body.onscroll = updateScrollPercent;
+}; 
 
-let time = 0;
-// Rendering 
-function animate() {
+function rotateStars(starsSpeed){
+    starsMesh.rotation.x += starsSpeed;
+    starsMesh.rotation.y += starsSpeed;
+};
 
-    time += 0.10;
-    // Animation
-    requestAnimationFrame(animate)
-    instancedMesh.rotation.x += 0.00001;
-    instancedMesh.rotation.y += 0.00001;
+function rotateAroundSphereAxis(object, axis, radians) {
+    const rotationMatrix = new THREE.Matrix4();
+    rotationMatrix.makeRotationAxis(axis.normalize(), radians);
+    rotationMatrix.multiply(object.matrix); // Pre-multiply
+    object.matrix = rotationMatrix;
+    object.rotation.setFromRotationMatrix(object.matrix);
+}; 
 
-    // Continue rotating the flowerGroup automatically
-    if (targetRotationX === 0 && targetRotationY === 0) {
-        flowerGroup.rotation.y += 0.0001;
-        flowerGroup.rotation.x += 0.0001;
-    } else {
-        // Rotate the flowerGroup based on user interaction
-        rotateAroundWorldAxis(flowerGroup, new THREE.Vector3(0, 1, 0), targetRotationX);
-        rotateAroundWorldAxis(flowerGroup, new THREE.Vector3(1, 0, 0), targetRotationY);
-        targetRotationX = targetRotationX * (1 - slowingFactor);
-        targetRotationY = targetRotationY * (1 - slowingFactor);
+function rotateSphere(sphereSpeed) {
+    if (!modalShown) {
+        // Continue rotating the flowerGroup automatically
+        if (targetRotationX === 0 && targetRotationY === 0) {
+            flowerGroup.rotation.y += sphereSpeed;
+            flowerGroup.rotation.x += sphereSpeed;
+        } else {
+            // Rotate the flowerGroup based on user interaction
+            rotateAroundSphereAxis(flowerGroup, new THREE.Vector3(0, 1, 0), targetRotationX);
+            rotateAroundSphereAxis(flowerGroup, new THREE.Vector3(1, 0, 0), targetRotationY);
+            var slowingFactor = 0.1;
+            targetRotationX = targetRotationX * (1 - slowingFactor);
+            targetRotationY = targetRotationY * (1 - slowingFactor);
+        }
+
     }
 
-    playScrollAnimations()
 
-
-    render()
-}
+    // Reset rotation
+    targetRotationX = 0;
+    targetRotationY = 0;
+    
+}; 
 
 function render() {
     composer.render();
-    // composer.render();
-    // renderer.render(scene, camera)
+}; 
+
+function jitterFlowers(time) {
+    flowerGroup.children.forEach((flower, i) => {
+        flower.position.setLength(10 + .6 * noise(10012 * i + .2 * time));
+    });
 }
 
-window.scrollTo({ top: 0, behavior: 'smooth' })
-animate()
+var time = 0;
+function animate() {
+    requestAnimationFrame(animate);
+    jitterFlowers(time);
+    rotateStars(0.000005);
+    rotateSphere(0.00025); 
+    scrollAnimation();
+    render();
+
+    onHover();
+    time += .01;
+}
+
+function initMobile() {
+    initScene();
+    initLighting();
+    initStars(50000);
+    initPostProcessing();
+    render();
+}
+
+function initDesktop() {
+    initScene();
+    initLighting();
+    initTitle();
+     
+    initStars(50000);
+    fetch('data.json')
+        .then(response => response.json())
+        .then(data => {
+            flowerData = data;
+            initFlowers(data);
+        })
+        .catch(error => console.error('Error loading data:', error));
+    // setupRaycaster();
+    
+    initPostProcessing();
+    initEventListeners();
+    animate();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function init() {
+    const screenThreshold = 768; // Set your screen size threshold
+    if (window.innerWidth >= screenThreshold) {
+        initDesktop();
+    } else {
+        initMobile();
+        // console.log('Screen size is too small. Initialization skipped.');
+    }
+}
+
+init(); 
+
