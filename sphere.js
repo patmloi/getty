@@ -9,8 +9,9 @@
 // import { Font } from 'three/addons/loaders/FontLoader.js';
 // import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.module.min.js';
-import { Mesh, MeshBasicMaterial, TextureLoader, PlaneGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.module.min.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.module.js';
+// import { Mesh, MeshBasicMaterial, TextureLoader, PlaneGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.module.min.js';
+const { Mesh, TextureLoader } = THREE
 
 import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/postprocessing/RenderPass.js';
