@@ -124,12 +124,16 @@ function createText(text, font, zPos, group) {
 
     group.add(textMesh);
 
+    console.log("CREATED TEXT MESH")
+
 }
 
 function initTitle() {
     const ttfLoader = new TTFLoader();
-    ttfLoader.load('./fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
+    console.log("CREATED NEW TTFL LOADER")
+    ttfLoader.load('fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
         var titleFont = new Font(json);
+        console.log("CREAETD NEW FONT")
         createText("Getty's Flowers", titleFont, 95, titleGroup);
         scene.add(titleGroup);
     });
