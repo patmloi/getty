@@ -80,7 +80,7 @@ function initLighting() {
 }
 
 function createText(text, font, zPos, group) {
-    const textDepth = 0.05,
+    const textDepth = 0.000005,
         textSize = 1,
         textCurveSegments = 15,
         textBevelThickness = 0.05,
