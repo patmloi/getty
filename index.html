@@ -17,264 +17,10 @@
 	<head>
 		<meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        
-		<title>My first three.js app</title>
-		<style>
-            body {
-                overflow-x: hidden;
-                margin: 0px;
-                font-family: monospace;
-                color: white;
-            }
 
-            canvas {
-                position: fixed;
-                top: 0;
-                left: 0;
-            }
+		<title>Getty's Flowers</title>
 
-            main {
-                width: 100vw;
-                height: 200vw;
-                z-index: 99;
-                position: absolute;
-                justify-content: center;
-                text-align: center;
-                font-size: 5vh;
-            }
-
-            #mobile {
-                display: none;
-            }
-
-            #mobileTitle{
-                margin: 2vh; 
-                font-size: 2rem; 
-                font-family: 'Giarek DemoVersion Regular';
-                src: URL('/fonts/ttf/Giarek-DemoVersion-Regular.ttf') format('truetype');
-            }
-
-            #mobileMsg{
-                margin: 2vh; 
-                font-size: 1rem; 
-                color: white; 
-                text-shadow: 1px 1px 10px #999999, 1px 1px 20px #999999;
-            }
-
-            #desktop {
-                display: block;
-            }
-
-            @media (max-width: 768px) {
-                #mobile {
-                    display: flex;
-                    flex-direction: column;
-                    height: 100vh; 
-                    justify-content: center; /* Horizontal centering */
-                    align-items: center;  
-
-                    color: white; 
-                    text-shadow: 1px 1px 10px #999999, 1px 1px 20px #999999;
-                }
-
-                #desktop {
-                    display: none;
-                }
-            }
-
-            section {
-                min-height: 115vh;
-                padding: 20px;
-                font-size: 4vh;
-            }
-            @font-face {
-                font-family: 'Giarek';
-                src: url('fonts/ttf/Giarek-DemoVersion-Regular.ttf') format('truetype');
-            }
-
-            .public-sans-explanation {
-                font-family: "Public Sans", serif;
-                font-optical-sizing: auto;
-                font-weight: 500;
-                font-style: normal;
-            }
-
-            .explanation {
-                padding-left: 25%; 
-                padding-right: 25%;
-                font-size: 1.5rem; 
-                color: white; 
-                text-shadow: 1px 1px 10px #999999, 1px 1px 20px #999999;
-            }
-
-            .explanation-link {
-                color: white; 
-            }
-
-            #scrollProgress {
-                position: fixed;
-                bottom: 10px;
-                left: 10px;
-                z-index: 99;
-                font-size: 3vh;
-            }
-
-            #modal {
-                width: 100%;
-                height: 100%; 
-                background-color: rgba(0, 0, 0, 0.9);
-                display: none;
-
-                position: fixed;
-                top: 0;        
-                left: 0;   
-                z-index: 999; 
-                pointer-events: auto;
-                align-items: center;
-            }
-
-            #modalInfo {
-                position: fixed; 
-                top: 50%;       
-                left: 50%;    
-                transform: translate(-50%, -50%); 
-                padding: 20px;
-                box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.9);
-                border-radius: 15px;
-                border: 2px solid rgba(255, 255, 255, 0.45);
-                z-index: 1000; /* Ensure it's on top of other content */
-                width: 75%; 
-                height: 75%;
-                pointer-events: auto;
-
-            }
-
-            #containerRow {
-                display: flex; 
-                align-items: center; 
-                /* justify-content: center;
-                vertical-align: center; */
-            }
-
-            #closeRow {
-                position: absolute; /* Force this element to be positioned relative to the parent */
-                top: 0; /* Stick to the top of the parent */
-                left: 95%; /* Center horizontally */
-                margin-top: 2%;
-                margin-bottom: 2%;
-            }
-
-            #modalTitle {
-                font-family: "Merriweather", serif;
-                font-weight: 400;
-                font-style: normal;
-                font-size: 2rem; 
-                margin-bottom: 1rem; 
-                margin-left: 1rem; 
-            }
-
-            #modalArtist {
-                font-family: "Public Sans", sans-serif;
-                font-optical-sizing: auto;
-                font-weight: 400;
-                font-style: italic;
-                font-size: 1.5rem; 
-                margin-bottom: 1rem; 
-                margin-left: 1rem; 
-            }
-
-            #modalDate {
-                font-family: "Public Sans", sans-serif;
-                font-optical-sizing: auto;
-                font-weight: 400;
-                font-style: italic;
-                font-size: 1.25rem; 
-                margin-bottom: 1rem; 
-                margin-left: 1rem; 
-            }
-            #modalDesc {
-                font-family: "Public Sans", sans-serif;
-                font-optical-sizing: auto;
-                font-weight: 400;
-                font-size: 1.1rem; 
-                margin-bottom: 1rem; 
-                margin-left: 1rem; 
-                text-align: justify;
-            }
-
-            #modalLink {
-                font-family: "Public Sans", sans-serif;
-                font-optical-sizing: auto;
-                font-weight: 400;
-                font-size: 1.1rem; 
-                text-align: justify;
-            }
-
-            .modalUrl {
-                text-decoration: none;
-                color: #e7e7e8; 
-                font-size: inherit; /* Matches the font-size of the parent container */
-                background-image: linear-gradient(currentColor, currentColor);
-                background-position: 0% 100%;
-                background-repeat: no-repeat;
-                background-size: 0% 2px;
-                transition: background-size cubic-bezier(0,.5,0,1) 0.3s;
-            }
-
-            .modalUrl:hover,
-            .modalUrl:focus {
-                color: #e7e7e8; 
-                text-decoration: none;
-                background-size: 100% 2px;
-            }
-
-            #modalUrlContainer {
-                margin-left: 1rem;
-                margin-bottom: 1rem; 
-            }
-
-            .container, .row, .col {
-                max-width: 100%;
-                max-height: 100%;
-                width: auto; 
-                height: auto;
-                overflow: hidden;
-
-            }
-
-            .modalText {
-                text-align: left; 
-                color: #e7e7e8; 
-            }
-
-            #modalImg {
-                max-height: 100%;          
-                max-width: 100%;       
-                object-fit: cover; 
-            }
-
-            /* #modalUrl {
-                background-color: rgba(0, 0, 0, 0);
-                box-shadow: 0px 0px 5px rgba(255, 255, 255, 0.9);
-                border-radius: 90px;
-                border: 2px solid rgba(255, 255, 255, 0.75);
-
-            } */
-
-            #closeBtn {
-                cursor: pointer;   /* Shows pointer cursor */
-                user-select: none;
-                color: #d3d3d3; 
-            }
-
-            .public-sans-text {
-                font-family: "Public Sans", serif;
-                font-optical-sizing: auto;
-                font-weight: 200;
-                font-style: normal;
-            }
-
-		</style>
+        <link rel="stylesheet" href="main.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">	
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -284,16 +30,15 @@
 
     </head>
 
-    
 	<body>
 		<span id="scrollProgress"></span>
-
 
         <main>
             <div id="mobile"> 
                 <div id="mobileTitle">Getty's Flowers</div>
                 <div id="mobileMsg"> This website is not designed for smaller screens, visit this page on a desktop instead!</div>
             </div>
+            
             <div id="desktop">
                 <section>
                 </section>
@@ -336,6 +81,7 @@
                     </div>
                 </div>
             </div>
+
         </main>
 
 		<script type="module" src="/sphere.js"></script>
