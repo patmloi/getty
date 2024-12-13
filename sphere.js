@@ -110,7 +110,7 @@ function createText(text, font, zPos, group) {
         reflectivity: 10,
         shininess: 15,
         emissive: 0xffffff,
-        emissiveIntensity: 0.40
+        emissiveIntensity: 0
      } );
 
     const centerOffset = - 0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
