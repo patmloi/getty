@@ -7,7 +7,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 
 import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
 import { Font } from 'three/addons/loaders/FontLoader.js';
-// import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 // import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.module.js';
 // import { Mesh, TextureLoader } from 'https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.module.js';
@@ -18,7 +18,7 @@ import { Font } from 'three/addons/loaders/FontLoader.js';
 
 // import { TTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/loaders/TTFLoader.js';
 // import { Font } from 'https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/loaders/FontLoader.js';
-import { TextGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/geometries/TextGeometry.js';
+// import { TextGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/geometries/TextGeometry.js';
 
 
 // Utilities
@@ -128,7 +128,7 @@ function createText(text, font, zPos, group) {
 
 function initTitle() {
     const ttfLoader = new TTFLoader();
-    ttfLoader.load('fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
+    ttfLoader.load('./fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
         var titleFont = new Font(json);
         createText("Getty's Flowers", titleFont, 95, titleGroup);
         scene.add(titleGroup);
