@@ -103,16 +103,20 @@ function createText(text, font, zPos, group) {
     textGeo.computeBoundingBox();
     textGeo.computeVertexNormals();
 
-    // new THREE.MeshPhongMaterial( { 
-    var textMaterial = new MeshPhongMaterial( { 
+    // var textMaterial = new THREE.MeshPhongMaterial( { 
+    //     color: 0xffffff,
+    //     specular: 0xffffff,
+    //     flatShading: false,
+    //     reflectivity: 10,
+    //     shininess: 15,
+    //     emissive: 0xffffff,
+    //     emissiveIntensity: 0.40
+    //  } );
+
+    const textMaterial = new THREE.MeshBasicMaterial({
         color: 0xffffff,
-        specular: 0xffffff,
-        flatShading: false,
-        reflectivity: 10,
-        shininess: 15,
-        emissive: 0xffffff,
-        emissiveIntensity: 0.40
-     } );
+        wireframe: false
+      });
 
     const centerOffset = - 0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
     const textHover = 0.5 * (textGeo.boundingBox.max.y - textGeo.boundingBox.min.y);
@@ -125,16 +129,12 @@ function createText(text, font, zPos, group) {
 
     group.add(textMesh);
 
-    console.log("CREATED TEXT MESH")
-
 }
 
 function initTitle() {
     const ttfLoader = new TTFLoader();
-    console.log("CREATED NEW TTFL LOADER")
     ttfLoader.load('fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
         var titleFont = new Font(json);
-        console.log("CREAETD NEW FONT")
         createText("Getty's Flowers", titleFont, 95, titleGroup);
         scene.add(titleGroup);
     });
