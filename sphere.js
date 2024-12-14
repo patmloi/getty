@@ -104,9 +104,9 @@ function createText(text, font, zPos, group) {
     textGeo.computeVertexNormals();
 
     console.log("BOUNDING BOX")
-    console.log(textGeo.computeBoundingBox())
+    console.log(textGeo.boundingBox)
     console.log("VERTEX NORMALS")
-    console.log(textGeo.computeVertexNormals())
+    console.log(textGeo.attributes.normal)
 
 
     var textMaterial = new THREE.MeshPhongMaterial( { 
