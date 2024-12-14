@@ -128,7 +128,7 @@ function createText(text, font, zPos, group) {
 
 function initTitle() {
     const ttfLoader = new TTFLoader();
-    ttfLoader.load('fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
+    ttfLoader.load('/fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
         var titleFont = new Font(json);
         createText("Getty's Flowers", titleFont, 95, titleGroup);
         scene.add(titleGroup);
