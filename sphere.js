@@ -80,7 +80,7 @@ function initLighting() {
 }
 
 function createText(text, font, zPos, group) {
-    const textDepth = 0.000005,
+    const textDepth = 0.05,
         textSize = 1,
         textCurveSegments = 15,
         textBevelThickness = 0.05,
@@ -128,7 +128,9 @@ function createText(text, font, zPos, group) {
 
 function initTitle() {
     const ttfLoader = new TTFLoader();
-    ttfLoader.load('/fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
+    ttfLoader.load('fonts/ttf/Giarek-DemoVersion-Regular.ttf', function(json) {
+        console.log("JSON LOADING CORRECTLY?")
+        console.log(json)
         var titleFont = new Font(json);
         createText("Getty's Flowers", titleFont, 95, titleGroup);
         scene.add(titleGroup);
