@@ -27,7 +27,7 @@ var noise = id => 1. * Math.sin(id);
 // Global variables
 let scene, camera, renderer, composer;
 let flowerGroup = new THREE.Group(), titleGroup = new THREE.Group(), starsMesh
-let raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2(), modalShown = false;
+let raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2(), modalShown = false, crossClicked = false;
 let highlightedFlower = false, originalMaterial = false; 
 const modalElement = document.querySelector('#modal');
 let flowerData = {};
@@ -341,6 +341,7 @@ function flowersVisible() {
             flower.material.opacity = 1;
             flower.material.transparent = true; // Keep this true to allow future opacity changes
             flower.material.needsUpdate = true;
+            flower.visible = true;
         }
     });
 }
@@ -353,6 +354,7 @@ function resetFlowers() {
 }
 
 function closeModal() {
+    crossClicked = true; 
     resetFlowers(); 
     modalElement.style.display = 'none';
     modalShown = false;
@@ -370,6 +372,7 @@ function hideFlowers () {
             flower.material.opacity = 0;
             flower.material.transparent = true;
             flower.material.needsUpdate = true;
+            flower.visible = false;
         }
     });
 }
@@ -484,9 +487,7 @@ function onHover() {
 }
 
 function onClick(event) {
-    if (modalShown) return;
-    
-    else {
+    if (!modalShown && !crossClicked) {  
         let intersects = getFlowerIntersectMouse();
         if (intersects.length > 0) {
             // Get intersected element
@@ -498,7 +499,11 @@ function onClick(event) {
             hideExplanations(); 
             updateModal(intersectObject);
         }
+    } else if (!modalShown && crossClicked) {
+        crossClicked = false; 
     }
+
+    
 
 
 }; 
