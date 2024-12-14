@@ -485,18 +485,22 @@ function onHover() {
 
 function onClick(event) {
     if (modalShown) return;
-
-    let intersects = getFlowerIntersectMouse();
-    if (intersects.length > 0) {
-        // Get intersected element
-        var intersectPoint = intersects[0].point;
-        var intersectObject = intersects[0].object;
-        resetHighlightedFlower(); 
-        changeBackgroundFlower(intersectObject, intersectPoint);
-        hideFlowers(); 
-        hideExplanations(); 
-        updateModal(intersectObject);
+    
+    else {
+        let intersects = getFlowerIntersectMouse();
+        if (intersects.length > 0) {
+            // Get intersected element
+            var intersectPoint = intersects[0].point;
+            var intersectObject = intersects[0].object;
+            resetHighlightedFlower(); 
+            changeBackgroundFlower(intersectObject, intersectPoint);
+            hideFlowers(); 
+            hideExplanations(); 
+            updateModal(intersectObject);
+        }
     }
+
+
 }; 
 
 // Mouse actions event handling
