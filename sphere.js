@@ -353,11 +353,22 @@ function resetFlowers() {
     
 }
 
+function disableScroll() {
+    // Add CSS to prevent scrolling
+    document.body.style.overflow = 'hidden';
+}
+
+function enableScroll() {
+    // Remove the CSS that prevents scrolling
+    document.body.style.overflow = '';
+}
+
 function closeModal() {
     crossClicked = true; 
     resetFlowers(); 
     modalElement.style.display = 'none';
     modalShown = false;
+    enableScroll(); 
 };
 
 function hideExplanations() {
@@ -498,14 +509,11 @@ function onClick(event) {
             hideFlowers(); 
             hideExplanations(); 
             updateModal(intersectObject);
+            disableScroll(); 
         }
     } else if (!modalShown && crossClicked) {
         crossClicked = false; 
     }
-
-    
-
-
 }; 
 
 // Mouse actions event handling
