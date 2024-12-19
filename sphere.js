@@ -27,7 +27,8 @@ var noise = id => 1. * Math.sin(id);
 // Global variables
 let scene, camera, renderer, composer;
 let flowerGroup = new THREE.Group(), titleGroup = new THREE.Group(), starsMesh
-let raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2(), modalShown = false, crossClicked = false;
+let raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2(); 
+let modalShown = false, crossClicked = false;
 let highlightedFlower = false, originalMaterial = false; 
 const modalElement = document.querySelector('#modal');
 let flowerData = {};
@@ -513,7 +514,7 @@ function onClick(event) {
         }
     } else if (!modalShown && crossClicked) {
         crossClicked = false; 
-    }
+    } 
 }; 
 
 // Mouse actions event handling
